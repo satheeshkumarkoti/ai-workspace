@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "hello-mcp": {
+      "command": "uv",
+      "args": [
+        "run",
+        "D:\\QualityThought\\Generative-AI\\github-repo\\mcp-exercise\\hello_mcp\\.venv\\Scripts\\python.exe",
+        "D:\\QualityThought\\Generative-AI\\github-repo\\mcp-exercise\\hello_mcp\\hello.py"
+      ],
+      "cwd": "D:\\QualityThought\\Generative-AI\\github-repo\\mcp-exercise\\hello_mcp"
+    }
+  }
+}
