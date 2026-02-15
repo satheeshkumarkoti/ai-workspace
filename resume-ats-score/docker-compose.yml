@@ -1,0 +1,23 @@
+
+services:
+  ats_mcp:
+    build: ./mcp-server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ats_data:/app/data
+
+  orchestrator:
+    build: ./orchestrator
+    volumes:
+      - ./orchestrator/keys:/app/keys
+    environment:
+      - MCP_URL=http://ats_mcp:8000/mcp
+      - GOOGLE_CLOUD_PROJECT=massive-seer-457104-j1
+    depends_on:
+      - ats_mcp
+
+
+
+volumes:
+  ats_data:
