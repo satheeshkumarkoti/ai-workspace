@@ -1,5 +1,5 @@
-📄 Resume ATS Scorer – Agentic GenAI Application
-📌 Project Overview
+**📄 Resume ATS Scorer – Agentic GenAI Application**
+**📌 Project Overview**
 
 Resume ATS Scorer is an Agentic GenAI application designed to evaluate candidate resumes against job descriptions using LLMs, MCP (Model Context Protocol), and LangGraph orchestration.
 
@@ -13,7 +13,7 @@ Persisting ATS results via a distributed MCP tool server
 
 The architecture is modular, scalable, and production-aligned, separating AI orchestration from persistence and tooling.
 
-🧠 High-Level Architecture
+**🧠 High-Level Architecture**
 
 The project is divided into two independent components:
 
@@ -23,8 +23,8 @@ MCP Orchestrator – Agentic AI Workflow Layer
 
 This separation follows modern Agentic AI and microservice principles.
 
-🧩 Part 1: MCP Server (Tool & Persistence Layer)
-🔹 Purpose
+**🧩 Part 1: MCP Server (Tool & Persistence Layer)
+🔹 Purpose**
 
 The MCP Server acts as a tool provider responsible for:
 
@@ -36,7 +36,7 @@ Exposing tools over HTTP using MCP protocol
 
 It is intentionally LLM-agnostic and does not contain any AI logic.
 
-🔹 Key Responsibilities
+**🔹 Key Responsibilities**
 
 Exposes tools like:
 
@@ -50,7 +50,7 @@ Handles database interactions
 
 Ensures data consistency and durability
 
-🔹 Technology Stack
+**🔹 Technology Stack**
 
 FastMCP – MCP tool server
 
@@ -60,7 +60,7 @@ Docker – Containerized deployment
 
 Python – Backend implementation
 
-🔹 Why MCP Server?
+**🔹 Why MCP Server?**
 
 Decouples business logic from AI reasoning
 
@@ -68,8 +68,8 @@ Allows multiple orchestrators or agents to reuse the same tools
 
 Enables future upgrades (SQLite → Postgres, local → cloud)
 
-🤖 Part 2: MCP Orchestrator (Agentic AI Layer)
-🔹 Purpose
+**🤖 Part 2: MCP Orchestrator (Agentic AI Layer)
+🔹 Purpose**
 
 The MCP Orchestrator is the Agentic AI brain of the system.
 
@@ -89,7 +89,7 @@ Score Persistence (MCP Tool)
 
 Each step operates on a shared state object, enabling deterministic and debuggable execution.
 
-🔹 Technology Stack
+**🔹 Technology Stack**
 
 LangGraph – Agent workflow orchestration
 
@@ -125,7 +125,7 @@ AI decisions are auditable and reproducible
 
 This architecture mirrors production-grade GenAI systems used in real enterprises.
 
-🗃️ Data Flow Summary
+**🗃️ Data Flow Summary**
 Resume + JD
      ↓
 MCP Tools (Parsing)
@@ -135,7 +135,8 @@ LLM ATS Scoring Agent
 MCP Tool (store_score)
      ↓
 SQLite Database
-🚀 Key Highlights
+
+**🚀 Key Highlights**
 
 Agentic AI with LangGraph
 
@@ -149,7 +150,7 @@ Persistent ATS scoring
 
 Production-aligned design
 
-🧪 Use Cases
+**🧪 Use Cases**
 
 Resume screening automation
 
@@ -159,7 +160,7 @@ HR tech experimentation
 
 Agentic GenAI learning project
 
-📌 Future Enhancements
+**📌 Future Enhancements**
 
 Replace SQLite with PostgreSQL
 
@@ -171,7 +172,7 @@ Add observability with LangSmith
 
 Deploy MCP server to cloud (GCP / AWS)
 
-🎯 Learning Outcomes
+**🎯 Learning Outcome**s
 
 Hands-on experience with Agentic AI
 
@@ -182,3 +183,4 @@ LangGraph-based orchestration
 Real-world GenAI system design
 
 Debugging distributed AI systems
+
