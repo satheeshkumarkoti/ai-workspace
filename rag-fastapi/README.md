@@ -1,567 +1,309 @@
 
-# Building a RAG System Using FastAPI + PostgreSQL + OpenAI
+# Building a RAG System Using FastAPI + PostgreSQL (pgvector) + OpenAI
 
-### Local Setup Guide 
-
----
-
-## WHAT WE ARE BUILDING
-
-A system where:
-1. User uploads a `.txt` document via API
-2. System chunks the text, generates embeddings using OpenAI, stores in PostgreSQL (pgvector)
-3. User sends a question via chat API
-4. System finds the most relevant chunks (semantic search) and sends them to GPT to generate an answer
+A fully working **Retrieval-Augmented Generation (RAG)** system built with FastAPI. Upload `.txt` or `.pdf` documents and ask questions about them — the system finds the most relevant content and uses GPT to generate accurate answers.
 
 ---
 
-## FOLDER / FILE STRUCTURE
+## What It Does
+
+1. User uploads a `.txt` or `.pdf` file via API
+2. System parses the file and splits it into sentences using NLTK
+3. Each sentence is embedded using OpenAI (`text-embedding-ada-002`) and stored in PostgreSQL with pgvector
+4. User asks a question — system finds the most similar sentences and sends them to GPT to generate an answer
+
+---
+
+## Project Structure
 
 ```
 rag-fastapi/
 │
-├── main.py               # FastAPI app, registers routes, creates DB tables
-├── db.py                 # DB engine, session, Base
-├── models.py             # SQLAlchemy table definition (with vector column)
-├── schemas.py            # Pydantic models for request/response validation
-├── embeddings.py         # Chunking + OpenAI embedding logic
-├── routes/
-│   ├── __init__.py       # Empty file (makes routes a package)
-│   ├── ingest.py         # POST /ingest — upload & store document
-│   └── chat.py           # POST /chat  — ask question, get answer
-├── .env                  # Environment variables (DB URL, OpenAI key)
-└── requirements.txt      # All dependencies
+├── main.py                 # FastAPI app — all routes and startup logic
+├── db.py                   # DB engine, session, models (File, FileChunk)
+├── background_tasks.py     # NLTK chunking + OpenAI embedding (runs in background)
+├── file_parser.py          # Text and PDF parsers with OCR fallback
+├── file_parser_tests.py    # Tests for file parsers
+├── api_tests.sh            # Bash script to test all API endpoints
+├── .env                    # Environment variables (not committed to git)
+├── .gitignore
+├── requirements.txt
+├── obama.txt               # Sample test document
+├── obama.pdf               # Sample PDF document
+└── obama-ocr.pdf           # Sample scanned/image-based PDF
 ```
 
 ---
 
-## STEP 1: DOCKER — Run pgvector Locally
+## Tech Stack
 
-pgvector is a PostgreSQL extension that adds vector storage and similarity search.
-
-```bash
-docker run -d \
-    --name rag-pgvector \
-    -e POSTGRES_PASSWORD=postgres \
-    -e POSTGRES_DB=rag_db \
-    -p 5433:5432 \
-    pgvector/pgvector:pg16
-```
-
-> Use port **5433** if you already have local PostgreSQL running on 5432.
-
-### Enable the vector extension inside the DB:
-```bash
-docker exec -it rag-pgvector psql -U postgres -d rag_db -c "CREATE EXTENSION IF NOT EXISTS vector;"
-```
-
-### Verify it's working:
-```bash
-docker exec -it rag-pgvector psql -U postgres -d rag_db -c "\dx"
-```
-You should see `vector` listed in extensions.
+| Technology | Purpose |
+|-----------|---------|
+| **FastAPI** | REST API framework |
+| **PostgreSQL + pgvector** | Vector storage and similarity search |
+| **SQLAlchemy** | ORM for database operations |
+| **OpenAI API** | Embeddings (`text-embedding-ada-002`) + Chat (`gpt-3.5-turbo`) |
+| **NLTK** | Sentence tokenization for smart chunking |
+| **PyPDF2 + pytesseract** | PDF parsing with OCR fallback |
+| **Docker** | Run pgvector locally |
 
 ---
 
-## STEP 2: Install Dependencies
+## Prerequisites
 
-```bash
-pip install fastapi uvicorn sqlalchemy psycopg2-binary pgvector python-dotenv openai
-```
-
-### requirements.txt
-```
-fastapi
-uvicorn
-sqlalchemy
-psycopg2-binary
-pgvector
-python-dotenv
-openai
-```
+- Python 3.8+
+- Docker Desktop
+- OpenAI API key (with credits)
 
 ---
 
-## STEP 3: Environment Variables
+## Local Setup Guide
 
-### .env
+### Step 1 — Clone the repo
+
+```bash
+git clone <your-repo-url>
+cd rag-fastapi
+```
+
+### Step 2 — Create virtual environment
+
+```bash
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+
+# Mac/Linux
+source .venv/bin/activate
+```
+
+### Step 3 — Install dependencies
+
+```bash
+pip install fastapi uvicorn sqlalchemy psycopg2-binary pgvector \
+            python-dotenv openai nltk PyPDF2 pytesseract pymupdf pillow
+```
+
+### Step 4 — Set up environment variables
+
+Create a `.env` file in the project root:
+
 ```dotenv
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5433/rag_db
 OPENAI_API_KEY=sk-your-openai-key-here
 ```
 
-> Never commit `.env` to GitHub. Add it to `.gitignore`.
+> ⚠️ Never commit `.env` to GitHub. It's already in `.gitignore`.
 
----
+### Step 5 — Start pgvector with Docker
 
-## STEP 4: Database Connection
-
-### db.py
-```python
-import os
-from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, declarative_base
-
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-print("DB URL:", DATABASE_URL)
-
-# Create the SQLAlchemy engine
-engine = create_engine(DATABASE_URL, echo=True)
-
-# Session factory — used in routes to talk to DB
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-
-# Base class for all models
-Base = declarative_base()
-
-
-def get_db():
-        """
-        FastAPI dependency that provides a DB session per request.
-        Automatically closes session when request is done.
-        """
-        db = SessionLocal()
-        try:
-                yield db
-        finally:
-                db.close()
-
-
-def test_connection():
-        with engine.connect() as conn:
-                result = conn.execute(text("SELECT 1"))
-                print("DB Test Result:", result.scalar())
+```bash
+docker run -d \
+  --name rag-pgvector \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=rag_db \
+  -p 5433:5432 \
+  pgvector/pgvector:pg16
 ```
 
----
+> Use port **5433** to avoid conflicts if local PostgreSQL is running on 5432.
 
-## STEP 5: Database Model (Table Definition)
+Enable the vector extension:
 
-### models.py
-```python
-from sqlalchemy import Column, Integer, String, Text
-from pgvector.sqlalchemy import Vector
-from db import Base
-
-
-class Document(Base):
-        """
-        Represents a single text chunk stored with its embedding.
-
-        - filename : original file name (for source tracking)
-        - chunk    : the actual text piece
-        - embedding: 1536-dimensional vector from OpenAI
-        """
-        __tablename__ = "documents"
-
-        id        = Column(Integer, primary_key=True, index=True)
-        filename  = Column(String,  nullable=False)
-        chunk     = Column(Text,    nullable=False)
-        embedding = Column(Vector(1536), nullable=False)
+```bash
+docker exec -it rag-pgvector psql -U postgres -d rag_db -c "CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
-> **Why 1536?**
-> OpenAI's `text-embedding-ada-002` model outputs a vector of 1536 floats.
-> If you switch models, this number must match the new model's output dimension.
+### Step 6 — Run the server
 
----
-
-## STEP 6: Pydantic Schemas (Request & Response Models)
-
-### schemas.py
-```python
-from pydantic import BaseModel
-
-
-class ChatRequest(BaseModel):
-        """Request body for the /chat endpoint."""
-        question: str
-        top_k: int = 5          # how many chunks to retrieve
-
-
-class ChunkResult(BaseModel):
-        """A single retrieved chunk with its similarity score."""
-        chunk: str
-        similarity: float
-
-
-class ChatResponse(BaseModel):
-        """Response from the /chat endpoint."""
-        answer: str
-        sources: list[ChunkResult]
-```
-
----
-
-## STEP 7: Embeddings & Chunking Logic
-
-### embeddings.py
-```python
-import os
-from openai import OpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-
-def get_embedding(text: str) -> list[float]:
-        """
-        Calls OpenAI to convert text into a 1536-dimensional vector.
-        This vector captures the 'meaning' of the text numerically.
-        """
-        response = client.embeddings.create(
-                input=text,
-                model="text-embedding-ada-002"
-        )
-        return response.data[0].embedding
-
-
-def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]:
-        """
-        Splits a large text into smaller overlapping chunks.
-
-        Why overlap? So that context at the boundary of two chunks isn't lost.
-
-        Example:
-                chunk_size = 500 words
-                overlap    = 50 words
-                Chunk 1: words 0–499
-                Chunk 2: words 450–949   ← 50-word overlap with chunk 1
-                Chunk 3: words 900–1399
-        """
-        words = text.split()
-        chunks = []
-        i = 0
-        while i < len(words):
-                chunk = " ".join(words[i : i + chunk_size])
-                chunks.append(chunk)
-                i += chunk_size - overlap
-        return chunks
-```
-
----
-
-## STEP 8: Ingest Route — Upload & Store Document
-
-### routes/ingest.py
-```python
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
-from sqlalchemy.orm import Session
-from db import get_db
-from models import Document
-from embeddings import get_embedding, chunk_text
-
-router = APIRouter()
-
-
-@router.post("/ingest")
-async def ingest_document(
-        file: UploadFile = File(...),
-        db: Session = Depends(get_db)
-):
-        """
-        Upload a .txt file. The system will:
-        1. Read the file content
-        2. Split it into overlapping chunks
-        3. Generate an embedding for each chunk using OpenAI
-        4. Store each chunk + embedding in PostgreSQL
-        """
-
-        # Only allow .txt files
-        if not file.filename.endswith(".txt"):
-                raise HTTPException(status_code=400, detail="Only .txt files are supported.")
-
-        # Read and decode the file
-        content = await file.read()
-        try:
-                text = content.decode("utf-8")
-        except UnicodeDecodeError:
-                raise HTTPException(status_code=400, detail="File must be UTF-8 encoded text.")
-
-        # Chunk the text
-        chunks = chunk_text(text)
-        if not chunks:
-                raise HTTPException(status_code=400, detail="File appears to be empty.")
-
-        # Embed each chunk and save to DB
-        saved = 0
-        for chunk in chunks:
-                embedding = get_embedding(chunk)
-                doc = Document(
-                        filename=file.filename,
-                        chunk=chunk,
-                        embedding=embedding
-                )
-                db.add(doc)
-                saved += 1
-
-        db.commit()
-        return {
-                "message": f"Successfully ingested '{file.filename}'",
-                "chunks_stored": saved
-        }
-```
-
----
-
-## STEP 9: Chat Route — Ask a Question
-
-### routes/chat.py
-```python
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from openai import OpenAI
-import os
-
-from db import get_db
-from embeddings import get_embedding
-from schemas import ChatRequest, ChatResponse, ChunkResult
-
-router = APIRouter()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-
-@router.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest, db: Session = Depends(get_db)):
-        """
-        Accept a user question and return an AI-generated answer.
-
-        Steps:
-        1. Embed the user's question
-        2. Search DB for the top-K most similar chunks (cosine similarity)
-        3. Build a prompt combining context + question
-        4. Send to OpenAI GPT and return the answer
-        """
-
-        # Step 1: Embed the question
-        query_embedding = get_embedding(request.question)
-
-        # Step 2: Vector similarity search using pgvector's <=> operator (cosine distance)
-        # Lower <=> value = more similar. We convert to similarity: 1 - distance
-        results = db.execute(
-                text("""
-                        SELECT chunk, 1 - (embedding <=> CAST(:embedding AS vector)) AS similarity
-                        FROM documents
-                        ORDER BY embedding <=> CAST(:embedding AS vector)
-                        LIMIT :top_k
-                """),
-                {
-                        "embedding": str(query_embedding),
-                        "top_k": request.top_k
-                }
-        ).fetchall()
-
-        if not results:
-                raise HTTPException(status_code=404, detail="No documents found. Please ingest documents first.")
-
-        # Step 3: Build context string from retrieved chunks
-        context = "\n\n---\n\n".join([row.chunk for row in results])
-
-        # Step 4: Send to OpenAI GPT
-        response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                        {
-                                "role": "system",
-                                "content": (
-                                        "You are a helpful assistant. Answer the user's question "
-                                        "based ONLY on the context provided below. "
-                                        "If the answer is not in the context, say 'I don't have enough information to answer that.'"
-                                )
-                        },
-                        {
-                                "role": "user",
-                                "content": f"Context:\n{context}\n\nQuestion: {request.question}"
-                        }
-                ],
-                temperature=0.2    # low temperature = more factual, less creative
-        )
-
-        answer = response.choices[0].message.content
-
-        # Return answer + source chunks with similarity scores
-        sources = [
-                ChunkResult(chunk=row.chunk, similarity=round(float(row.similarity), 4))
-                for row in results
-        ]
-
-        return ChatResponse(answer=answer, sources=sources)
-```
-
----
-
-## STEP 10: Main App Entry Point
-
-### main.py
-```python
-from fastapi import FastAPI
-from db import engine, Base
-import models  # important: registers Document model with Base
-from routes.ingest import router as ingest_router
-from routes.chat import router as chat_router
-
-# Create all tables in DB on startup (if they don't exist)
-Base.metadata.create_all(bind=engine)
-
-app = FastAPI(
-        title="RAG System API",
-        description="Upload documents and chat about their content using OpenAI.",
-        version="1.0.0"
-)
-
-# Register routes
-app.include_router(ingest_router, prefix="/api", tags=["Ingest"])
-app.include_router(chat_router,   prefix="/api", tags=["Chat"])
-
-
-@app.get("/")
-def root():
-        return {"status": "RAG API is running ✅"}
-```
-
-### Run the server:
 ```bash
 uvicorn main:app --reload --port 8000
 ```
 
-### Auto-generated API docs (Swagger UI):
+On startup, the app automatically creates the `files` and `file_chunks` tables.
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | List all uploaded files |
+| `POST` | `/uploadfile/` | Upload a `.txt` or `.pdf` file |
+| `POST` | `/ask/` | Ask a question about a file |
+| `POST` | `/find-similar-chunks/{file_id}` | Find similar text chunks |
+
+### Swagger UI (interactive docs)
+
 ```
 http://localhost:8000/docs
 ```
 
 ---
 
-## STEP 11: Testing the API
+## Testing the API
 
-### Test 1 — Health Check
+### Upload a file
+
 ```bash
-curl http://localhost:8000/
-```
-Expected: `{"status": "RAG API is running ✅"}`
+# Linux/Mac
+curl -X POST "http://127.0.0.1:8000/uploadfile/" -F "file=@obama.txt"
 
----
-
-### Test 2 — Ingest a Document
-Create a sample text file first:
-```
-echo "FastAPI is a modern, fast web framework for building APIs with Python. It is based on standard Python type hints. PostgreSQL is a powerful open-source relational database. pgvector adds vector similarity search to PostgreSQL." > sample.txt
+# Windows PowerShell
+curl.exe -X POST "http://127.0.0.1:8000/uploadfile/" -F "file=@obama.txt"
 ```
 
-Upload it:
-```bash
-curl -X POST http://localhost:8000/api/ingest \
-    -F "file=@sample.txt"
-```
-Expected:
+Expected response:
 ```json
-{
-    "message": "Successfully ingested 'sample.txt'",
-    "chunks_stored": 1
-}
+{"info": "File saved and processing started", "filename": "obama.txt", "file_id": 1}
 ```
 
----
+### List all files
 
-### Test 3 — Ask a Question
 ```bash
-curl -X POST http://localhost:8000/api/chat \
-    -H "Content-Type: application/json" \
-    -d '{"question": "What is FastAPI?", "top_k": 3}'
+curl.exe http://127.0.0.1:8000/
 ```
-Expected:
-```json
-{
-    "answer": "FastAPI is a modern, fast web framework for building APIs with Python...",
-    "sources": [
-        {"chunk": "FastAPI is a modern...", "similarity": 0.9231}
-    ]
-}
+
+### Ask a question (wait 30 seconds after upload for embedding to complete)
+
+```bash
+# Windows PowerShell
+$body = '{"document_id": 1, "question": "When was Obama elected for the second time?"}'
+curl.exe -X POST "http://127.0.0.1:8000/ask/" -H "Content-Type: application/json" -d $body
+```
+
+```bash
+# Linux/Mac
+curl -X POST "http://127.0.0.1:8000/ask/" \
+  -H "Content-Type: application/json" \
+  -d '{"document_id": 1, "question": "When was Obama elected for the second time?"}'
+```
+
+### Find similar chunks
+
+```bash
+$body = '{"question": "Who is Barack Obama wife?"}'
+curl.exe -X POST "http://127.0.0.1:8000/find-similar-chunks/1" -H "Content-Type: application/json" -d $body
+```
+
+### Run all tests at once
+
+```bash
+bash api_tests.sh
+```
+
+> The script uploads a file, waits 30 seconds for background embedding, then tests `/ask/` and `/find-similar-chunks/`.
+
+---
+
+## Database Schema
+
+```
+files                          file_chunks
+──────────────────────         ─────────────────────────────
+id          (PK)          ──►  id              (PK)
+file_name                      file_id         (FK → files.id)
+file_content                   chunk_text
+                               chunk_embedding (Vector 1536)
+```
+
+### Check data in database
+
+```bash
+docker exec -it rag-pgvector psql -U postgres -d rag_db
+
+# Inside psql:
+\dt                                          -- list tables
+SELECT id, file_name FROM files;             -- see uploaded files
+SELECT COUNT(*) FROM file_chunks;            -- count chunks
+SELECT id, chunk_text FROM file_chunks LIMIT 5;  -- sample chunks
+\q                                           -- exit
 ```
 
 ---
 
-## HOW THE FULL FLOW WORKS (Concept Summary)
+## How RAG Works
 
 ```
-INGEST FLOW:
-────────────
-User uploads sample.txt
-                │
-                ▼
-Split into chunks (500 words, 50 overlap)
-                │
-                ▼
-For each chunk → call OpenAI Embeddings API → get 1536-float vector
-                │
-                ▼
-INSERT INTO documents (filename, chunk, embedding) → PostgreSQL
+UPLOAD FLOW:
+User uploads obama.txt
+        │
+        ▼
+Parse file content (TextParser / PDFParser with OCR fallback)
+        │
+        ▼
+Save to files table → get file_id
+        │
+        ▼
+Background task: NLTK splits text into sentences
+        │
+        ▼
+Each sentence → OpenAI embedding API → 1536-float vector
+        │
+        ▼
+Save to file_chunks table (chunk_text + chunk_embedding)
 
+─────────────────────────────────────────────────────
 
-CHAT FLOW:
-──────────
-User asks: "What is FastAPI?"
-                │
-                ▼
-Embed the question → get 1536-float query vector
-                │
-                ▼
-SELECT chunk FROM documents ORDER BY embedding <=> query_vector LIMIT 5
-(finds the 5 most semantically similar chunks)
-                │
-                ▼
-Build prompt: "Here is the context... Answer this question..."
-                │
-                ▼
-Send to GPT-3.5-turbo → get answer
-                │
-                ▼
-Return answer + source chunks to user
+QUESTION FLOW:
+User asks: "When was Obama elected?"
+        │
+        ▼
+Embed the question → 1536-float query vector
+        │
+        ▼
+L2 distance search → find top 5 most similar chunks
+        │
+        ▼
+Build prompt: system + context chunks + question
+        │
+        ▼
+Send to GPT-3.5-turbo → generate answer
+        │
+        ▼
+Return answer + source chunks used
 ```
 
 ---
 
-## pgvector OPERATORS CHEAT SHEET
+## File Parser Design
 
-| Operator | Type             | When to use               |
-|----------|------------------|---------------------------|
-| `<=>`    | Cosine distance  | Text embeddings (default) |
-| `<->`    | L2 / Euclidean   | Image embeddings          |
-| `<#>`    | Inner product    | When vectors are normalized |
+```
+BaseParser (Abstract)
+    │
+    ├── TextParser       → reads .txt files directly
+    └── PDFParser        → tries PyPDF2 first
+                           falls back to OCR (pytesseract + fitz)
 
-Similarity = `1 - cosine_distance`. Range: 0 (unrelated) to 1 (identical).
+ParserFactory            → registry: maps ".txt" / ".pdf" to parser
+FileParser               → single interface, auto-selects the right parser
+```
 
 ---
 
-## COMMON ERRORS & FIXES
+## Common Errors & Fixes
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `password authentication failed` | Wrong PG password | `ALTER USER postgres WITH PASSWORD 'postgres';` inside psql |
-| `connection refused on 5432` | Port conflict with local PG | Use `-p 5433:5432` in Docker, update `.env` to 5433 |
+| `password authentication failed` | Wrong password or wrong port | Check `.env`, use port 5433 |
+| `Connection refused` | Docker not running | `docker start rag-pgvector` |
 | `type "vector" does not exist` | pgvector extension missing | `CREATE EXTENSION IF NOT EXISTS vector;` |
-| `dimension mismatch` | Model changed or wrong size | Ensure `Vector(1536)` matches your embedding model |
-| `.env values are None` | `load_dotenv()` not called | Add `load_dotenv()` at top of `db.py` and `embeddings.py` |
-| `ModuleNotFoundError: pgvector` | Package not installed | `pip install pgvector` |
-| `openai.AuthenticationError` | Wrong API key | Check `OPENAI_API_KEY` in `.env` |
-| `No documents found` | Ingestion not done yet | Call `/api/ingest` before `/api/chat` |
+| `DB URL: None` | `.env` not loaded | Ensure `load_dotenv()` is at top of `db.py` |
+| `NameError: engine not defined` | Wrong code order in `db.py` | Define engine before SessionLocal |
+| `openai 429 insufficient_quota` | No OpenAI credits | Add billing at platform.openai.com |
+| `JSON decode error` in PowerShell | PowerShell quote handling | Use `$body = '...'` variable or use `curl.exe` |
 
 ---
 
-## KEY CONCEPTS GLOSSARY
+## Key Concepts
 
 | Term | Meaning |
 |------|---------|
-| **Embedding** | A list of numbers (vector) that represents the meaning of text |
-| **Chunking** | Splitting large text into smaller pieces for better retrieval |
-| **Cosine Similarity** | Measures how similar two vectors are (0=different, 1=identical) |
-| **pgvector** | PostgreSQL extension that stores and searches vectors |
-| **RAG** | Retrieve relevant context first, then generate an answer using LLM |
-| **`<=>` operator** | pgvector's cosine distance operator for nearest-neighbor search |
-| **top_k** | How many similar chunks to retrieve before sending to LLM |
-| **Temperature** | Controls GPT creativity: 0=factual, 1=creative |
+| **Embedding** | A list of 1536 numbers representing the meaning of text |
+| **pgvector** | PostgreSQL extension for storing and searching vectors |
+| **L2 distance** | How far apart two vectors are — smaller = more similar |
+| **RAG** | Retrieve relevant context, then generate answer using LLM |
+| **Background task** | FastAPI runs embedding after returning HTTP response — keeps API fast |
+| **NLTK** | Smart sentence splitter — respects sentence boundaries unlike word splitting |
+| **OCR** | Optical Character Recognition — extracts text from image-based PDFs |
