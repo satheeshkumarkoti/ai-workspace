@@ -1,18 +1,37 @@
-\# ai-workspace
+# 🚀 AI Workspace
 
-I created this repository for AI / GEN AI Projects, AI Development, AI Topics etc..
+This repository contains multiple **AI / GenAI projects** focused on real-world applications using **LLMs, RAG, and Multi-Agent Systems**.
 
+---
 
+## 📌 Table of Contents
 
-POC / Projects
+- [Projects](#-projects)
+- [Tech Stack](#-tech-stack)
+- [Repository Structure](#-repository-structure)
 
-I - GEN AI Projects, tech stack combination of Python, LLM, LangChain, RAG, MCP, LangGraph and Vector DB. 
+---
 
-    1\. resume-ats-score
-    
-    2\. rag-fastapi
-    
-    3\. finnie-ai ( Agents + A2A + RAG - Chroma DB )
+## 📦 Projects
 
-II - GEN AI with Java, Spring Boot - Spring AI
+| Project Name        | Description                                                                 | Tech Stack                          |
+|--------------------|-----------------------------------------------------------------------------|-------------------------------------|
+| **finnie-ai**      | Multi-agent AI Finance Assistant (A2A + RAG + ChromaDB)                     | Python, FastAPI, Streamlit, RAG     |
+| **rag-fastapi**    | Backend service for Retrieval-Augmented Generation                          | FastAPI, Vector DB                  |
+| **resume-ats-score** | AI-based resume evaluation and ATS scoring system                          | Python, NLP, AI                     |
 
+---
+
+## 🛠 Tech Stack
+
+- Python
+- LLM / GenAI
+- RAG (Retrieval-Augmented Generation)
+- FastAPI
+- Streamlit
+- Vector DB (Chroma / FAISS)
+- LangChain / LangGraph
+
+---
+
+## 📁 Repository Structure
