@@ -35,3 +35,11 @@ This repository contains multiple **AI / GenAI projects** focused on real-world 
 ---
 
 ## 📁 Repository Structure
+
+ai-workspace/
+│
+├── finnie-ai/ # Multi-agent finance assistant
+├── rag-fastapi/ # RAG backend APIs
+├── resume-ats-score/ # Resume analysis system
+├── spring-boot-with-gen-ai/ # Spring Boot with GEN_AI
+└── README.md
