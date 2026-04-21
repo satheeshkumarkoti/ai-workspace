@@ -12,7 +12,7 @@ I - GEN AI Projects, tech stack combination of Python, LLM, LangChain, RAG, MCP,
     
     2\. rag-fastapi
     
-    3\. finnie-ai
+    3\. finnie-ai ( Agents + A2A + RAG - Chroma DB )
 
 II - GEN AI with Java, Spring Boot - Spring AI
 
