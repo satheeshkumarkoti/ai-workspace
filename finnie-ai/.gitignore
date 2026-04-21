@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Virtual environments
+venv/
+.env/
+.env
+
+# Environment — NEVER commit API keys
+.env.*
+
+# ChromaDB / vector stores
+chroma_db/
+*.sqlite3
+
+# Pytest
+.pytest_cache/
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+mnt/
