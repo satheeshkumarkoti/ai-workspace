@@ -7,17 +7,41 @@
 [![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent-green)](https://langchain-ai.github.io/langgraph/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-black?logo=openai)](https://openai.com)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector%20Store-purple)](https://www.trychroma.com/)
+[![Tavily](https://img.shields.io/badge/Tavily-AI%20Search-orange)](https://tavily.com)
 [![Redis](https://img.shields.io/badge/Redis-Shared%20Memory-red?logo=redis)](https://redis.io)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi)](https://fastapi.tiangolo.com)
 [![Tests](https://img.shields.io/badge/Tests-82%20Passing-brightgreen)](./tests)
+[![Coverage](https://img.shields.io/badge/Coverage-85%25-green)](./tests)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](./LICENSE)
+
+---
+
+> 🏆 **Capstone Project** — Multi-Agent Generative AI System with RAG, A2A Communication, Live Market Data, and Personalized Learning
 
 ---
 
 ## 📌 OVERVIEW
 
-**Finnie** is a production-grade, multi-agent AI finance assistant built for Indian retail investors. It combines **Generative AI**, **Retrieval-Augmented Generation (RAG)**, and **Agent-to-Agent (A2A) communication** to deliver personalized, accurate, and real-time financial guidance.
+**Finnie** is a production-grade, multi-agent AI finance assistant built for Indian retail investors. It combines **Generative AI**, **Retrieval-Augmented Generation (RAG)**, **Tavily AI Search**, and **Agent-to-Agent (A2A) communication** to deliver personalized, accurate, and real-time financial guidance.
 
 Built as a Capstone Project demonstrating enterprise-level AI architecture — from intent routing to live market data, from vector search to cross-agent collaboration.
+
+---
+
+## ✨ KEY FEATURES
+
+| Feature | Description |
+|---|---|
+| 🤖 **4 Specialist Agents** | Literacy, Market, Portfolio, Learning — each expert in its domain |
+| 🔁 **A2A Communication** | Agents collaborate — Market Agent feeds live prices to Portfolio Agent |
+| 📚 **RAG Pipeline** | ChromaDB vector store with cosine similarity filtering for accurate answers |
+| 📈 **Live Market Data** | Real-time NSE/BSE prices via yFinance |
+| 🔍 **Tavily AI Search** | Latest financial news with Bullish/Bearish/Neutral sentiment tagging |
+| 🎓 **Personalized Learning** | Dynamic learning paths based on experience, risk appetite, and goals |
+| 💼 **Portfolio Analysis** | Risk scoring, sector concentration, P&L tracking, rebalancing advice |
+| 🧠 **Shared Memory** | Redis-powered cross-agent state persistence |
+| ⚡ **FastAPI Backend** | REST API with Swagger docs for all 4 agents |
+| 🧪 **82 Tests** | Pytest test suite with ~85% code coverage |
 
 ---
 
@@ -28,7 +52,9 @@ Built as a Capstone Project demonstrating enterprise-level AI architecture — f
 | Financial jargon stops people from investing | Literacy Agent explains concepts in plain language |
 | Generic tools don't adapt to individual goals | Personalized learning paths per user profile |
 | No real-time insights for beginners | Market Agent fetches live prices via YFinance |
+| News is scattered across multiple sources | Tavily AI aggregates and summarizes top financial news |
 | Quality financial education doesn't scale | Multi-agent AI scales to unlimited users |
+| Portfolio analysis is expensive | AI-powered risk scoring and rebalancing — free |
 
 ---
 
@@ -48,18 +74,18 @@ Built as a Capstone Project demonstrating enterprise-level AI architecture — f
    ┌────▼───┐  ┌────▼───┐  ┌───▼────┐ ┌───▼────┐
    │AGENT 1 │  │AGENT 2 │  │AGENT 3 │ │AGENT 4 │
    │Literacy│  │Market  │  │Portfo- │ │Learning│
-   │  RAG   │  │ Data   │  │  lio   │ │  Path  │
+   │  RAG   │  │+ Tavily│  │  lio   │ │  Path  │
    └────────┘  └────────┘  └────────┘ └────────┘
         │           │           │          │
 ┌───────▼───────────▼───────────▼──────────▼──────────┐
 │              A2A COMMUNICATION LAYER                │
 │         Redis Shared State · LangGraph Edges        │
-└───────┬───────────────────────────┬─────────────────┘
-        │                           │
-  ┌─────▼──────┐             ┌──────▼──────┐
-  │  CHROMADB  │             │  YFINANCE   │
-  │ Vector DB  │             │  Live Data  │
-  └────────────┘             └─────────────┘
+└───────┬──────────────┬────────────┬─────────────────┘
+        │              │            │
+  ┌─────▼──────┐ ┌─────▼─────┐ ┌───▼──────┐
+  │  CHROMADB  │ │  YFINANCE │ │  TAVILY  │
+  │ Vector DB  │ │ Live Data │ │AI Search │
+  └────────────┘ └───────────┘ └──────────┘
 ```
 
 ---
@@ -75,8 +101,9 @@ Built as a Capstone Project demonstrating enterprise-level AI architecture — f
 
 ### AGENT 2 — Market Data Agent 📈
 - Fetches **live stock prices** from NSE/BSE via `yFinance`
+- Fetches **latest financial news** via `Tavily AI Search`
 - Covers: NIFTY 50, SENSEX, individual stocks (INFY, TCS, HDFC, etc.)
-- Generates AI narrative around raw market numbers
+- Tags every news item: 🟢 Bullish / 🔴 Bearish / 🔵 Neutral
 - Called independently **and** via A2A by the Portfolio Agent
 
 ### AGENT 3 — Portfolio Analyst Agent 💼
@@ -89,7 +116,7 @@ Built as a Capstone Project demonstrating enterprise-level AI architecture — f
 - Generates **personalized** financial education journeys
 - Adapts to: experience level (Beginner/Intermediate/Advanced), risk appetite, and financial goals
 - Tracks progress in **Redis** shared memory across sessions
-- Uses Claude/Gemini for long-context learning path generation
+- Recommends free Indian resources: SEBI, NSE Academy, AMFI
 
 ---
 
@@ -108,7 +135,33 @@ Built as a Capstone Project demonstrating enterprise-level AI architecture — f
 5. Returns unified response to user
 ```
 
-This pattern ensures **agents collaborate** rather than operate in silos.
+> This pattern ensures **agents collaborate** rather than operate in silos.
+
+---
+
+## 🔍 TAVILY AI SEARCH INTEGRATION
+
+Tavily is purpose-built for AI agents — replaces traditional scraping APIs:
+
+```python
+# Auto-triggered for queries containing:
+# "news", "suggest", "today", "latest", "should I invest", "trend"
+
+tavily.search(
+    query="Indian stock market outlook today",
+    search_depth="basic",
+    max_results=4,
+    include_domains=[
+        "economictimes.indiatimes.com",
+        "moneycontrol.com",
+        "livemint.com",
+        "ndtvprofit.com"
+    ]
+)
+# Returns clean structured articles
+# GPT-4 tags each: Bullish / Bearish / Neutral
+# Presented alongside live prices in one unified response
+```
 
 ---
 
@@ -122,8 +175,9 @@ This pattern ensures **agents collaborate** rather than operate in silos.
 | **Embeddings** | OpenAI text-embedding-ada-002 |
 | **Vector Store** | ChromaDB (HNSW Index, Cosine Similarity) |
 | **Market Data** | YFinance (NSE/BSE Live Prices) |
+| **News Search** | Tavily AI Search (1000 Free Searches/Month) |
 | **Shared Memory** | Redis (A2A State, Session Persistence) |
-| **Backend** | FastAPI |
+| **Backend** | FastAPI + Uvicorn |
 | **Testing** | Pytest (82 Tests, ~85% Coverage) |
 | **Language** | Python 3.10+ |
 
@@ -134,21 +188,22 @@ This pattern ensures **agents collaborate** rather than operate in silos.
 ### Prerequisites
 - Python 3.10+
 - OpenAI API Key ([Get one here](https://platform.openai.com))
+- Tavily API Key ([Free at tavily.com](https://tavily.com))
 - Redis (Optional — App runs without it)
 
 ### Installation
 
 ```bash
 # Step 1 — Clone the repository
-git clone https://github.com/YOUR-USERNAME/finnie.git
-cd finnie
+git clone https://github.com/satheeshkumarkoti/ai-workspace.git
+cd ai-workspace/finnie-ai
 
 # Step 2 — Install all dependencies
 pip install -r requirements.txt
 
 # Step 3 — Configure environment (Windows)
 copy .env.template .env
-# Open .env and add your OPENAI_API_KEY
+# Open .env and add your API keys
 
 # Step 4 — Load RAG Knowledge Base (run once)
 python -m rag.ingestor
@@ -159,16 +214,23 @@ streamlit run ui/app.py
 
 Open your browser at **http://localhost:8501** 🎉
 
+### Run FastAPI Backend (Optional)
+
+```bash
+uvicorn api.main:app --reload --port 8000
+# Swagger Docs → http://localhost:8000/docs
+```
+
 ---
 
 ## 📁 PROJECT STRUCTURE
 
 ```
-FINNIE/
+FINNIE-AI/
 ├── agents/
 │   ├── orchestrator.py       # Intent Detection + A2A Routing (LangGraph)
 │   ├── literacy_agent.py     # Agent 1 — RAG-Powered Financial Education
-│   ├── market_agent.py       # Agent 2 — Live Market Data (YFinance)
+│   ├── market_agent.py       # Agent 2 — Live Data (YFinance) + News (Tavily)
 │   ├── portfolio_agent.py    # Agent 3 — Portfolio Analysis + Risk Scoring
 │   └── learning_agent.py     # Agent 4 — Personalized Learning Paths
 ├── rag/
@@ -178,11 +240,11 @@ FINNIE/
 ├── memory/
 │   └── redis_store.py        # Shared A2A State + Session Memory
 ├── tools/
+│   ├── tavily_tool.py        # Tavily AI News Search Tool
 │   ├── yfinance_tool.py      # LangGraph-Compatible Market Data Tool
-│   ├── serpapi_tool.py       # News Search Tool
-│   └── portfolio_tools.py    # Portfolio Calculation Utilities
+│   └── portfolio_tools.py    # Portfolio Calculation + Risk Scoring
 ├── api/
-│   └── main.py               # FastAPI Backend
+│   └── main.py               # FastAPI Backend (REST + Swagger)
 ├── ui/
 │   └── app.py                # Streamlit Multi-Tab UI
 ├── tests/
@@ -195,6 +257,7 @@ FINNIE/
 ├── .env.template             # Environment Variable Template
 ├── requirements.txt          # Python Dependencies
 ├── pytest.ini                # Test Configuration
+├── LICENSE                   # MIT License
 └── README.MD
 ```
 
@@ -232,7 +295,7 @@ pytest tests/test_agents.py -v
 |---|---|
 | 💬 **Chat** | Multi-Agent Chat, Agent Badge Indicators, Suggested Queries, Conversation History |
 | 📊 **Portfolio** | Holdings Table, P&L Tracking, AI Risk Analysis, Add/Remove Holdings |
-| 📈 **Market Trends** | Live Indices (NIFTY, SENSEX), Stock Prices, AI News Digest |
+| 📈 **Market Trends** | Live Indices (NIFTY, SENSEX), Stock Prices, Tavily News Digest |
 | 🎓 **Learning Path** | Personalized Curriculum, Progress Tracking, Module Completion |
 
 ---
@@ -240,20 +303,20 @@ pytest tests/test_agents.py -v
 ## 📊 SAMPLE QUERIES
 
 ```
-# Financial Literacy Agent
+# Financial Literacy Agent (RAG)
 "What is a SIP and how does it work?"
 "Explain P/E ratio in simple terms"
 "What are ELSS mutual funds?"
 "How does compound interest work?"
 "What is rupee cost averaging?"
 
-# Market Data Agent
+# Market Data Agent (yFinance + Tavily)
 "What is NIFTY 50 today?"
 "Show me latest market trends"
-"How is Infosys stock performing?"
-"What is the SENSEX at right now?"
+"What do you suggest for investment today?"
+"Should I invest in IT stocks now?"
 
-# Portfolio Analyst Agent
+# Portfolio Analyst Agent (A2A)
 "Analyse my portfolio risk"
 "Should I rebalance my investments?"
 "What is my sector concentration?"
@@ -274,10 +337,11 @@ pytest tests/test_agents.py -v
 # Required
 OPENAI_API_KEY=sk-your-openai-key-here
 
-# Optional — For News Search
-SERPAPI_KEY=your-serpapi-key-here
+# Tavily AI Search — Free 1000 Searches/Month
+# Get your key at: https://tavily.com
+TAVILY_API_KEY=tvly-your-tavily-key-here
 
-# Optional — For Session Persistence (App works without Redis)
+# Optional — Session Persistence (App works without Redis)
 REDIS_HOST=localhost
 REDIS_PORT=6379
 ```
@@ -294,6 +358,7 @@ REDIS_PORT=6379
 - [ ] Agent Performance Monitoring (LangSmith)
 - [ ] Multi-Language Support (Hindi, Tamil)
 - [ ] Voice Interface Integration
+- [ ] Agentic Proctoring for Financial Quizzes
 
 ---
 
@@ -303,6 +368,7 @@ REDIS_PORT=6379
 Solution Architect | Gen AI & LLM Engineer
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?logo=linkedin)](https://linkedin.com/in/satheesh-kumar-k11a98823)
+[![GitHub](https://img.shields.io/badge/GitHub-Portfolio-black?logo=github)](https://github.com/satheeshkumarkoti)
 
 - 18+ Years in Enterprise IT Architecture
 - 10+ Years Java Full Stack | 2+ Years Generative AI
@@ -313,9 +379,8 @@ Solution Architect | Gen AI & LLM Engineer
 
 ## 📄 LICENSE
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License — see [LICENSE](./LICENSE) for details.
 
 ---
 
 > *"Finnie makes financial literacy accessible to every Indian investor — one conversation at a time."*
->>>>>>> 863a5ce (Initial commit: Finnie AI Finance Assistant - Multi-agent RAG system with A2A communication)
