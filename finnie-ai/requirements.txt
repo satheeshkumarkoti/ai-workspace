@@ -21,8 +21,13 @@ redis>=5.0.0
 streamlit>=1.32.0
 streamlit-extras>=0.3.0
 
+# Backend API
+fastapi>=0.110.0
+uvicorn>=0.29.0
+
 # Config
 python-dotenv>=1.0.0
 
 # Utils
 requests>=2.31.0
+tavily-python>=0.3.0
