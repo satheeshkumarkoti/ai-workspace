@@ -14,11 +14,13 @@ This repository contains multiple **AI / GenAI projects** focused on real-world 
 
 ## 📦 Projects
 
-| Project Name        | Description                                                                 | Tech Stack                          |
-|--------------------|-----------------------------------------------------------------------------|-------------------------------------|
-| **finnie-ai**      | Multi-agent AI Finance Assistant (A2A + RAG + ChromaDB)                     | Python, FastAPI, Streamlit, RAG     |
-| **rag-fastapi**    | Backend service for Retrieval-Augmented Generation                          | FastAPI, Vector DB                  |
-| **resume-ats-score** | AI-based resume evaluation and ATS scoring system                          | Python, NLP, AI                     |
+| Project Name           | Description                                                                 | Tech Stack                                |
+|------------------------|-----------------------------------------------------------------------------|-------------------------------------------|
+| **finnie-ai**          | Multi-agent AI Finance Assistant (A2A + RAG + ChromaDB)                     | Python, FastAPI, Streamlit, RAG           |
+| **rag-fastapi**        | Backend service for Retrieval-Augmented Generation                          | FastAPI, Vector DB                        |
+| **resume-ats-score**   | AI-based resume evaluation and ATS scoring system                           | Python, NLP, AI                           |
+| **spring-rag-engine**  | Spring Boot, GEN AI-based LLM, RAG and Vector DB integration.               | Java, Spring Boot, LLM, Multimodel, RAG   |
+
 
 ---
 
