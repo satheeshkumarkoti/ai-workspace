@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: spring-rag-engine
+
+
+  ai:
+    openai:
+      api-key: openai_api_key
+      organization-id: openai_organization-id
+      project-id: openai_project-id
+
+      chat:
+        options:
+          model: gpt-4o
+
+      embedding:
+        model: text-embedding-3-small
+
+    vectorstore:
+      pgvector:
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: 1536
+
+  datasource:
+    url: jdbc:postgresql://localhost:52625/ics
+    username: postgres
+    password: postgres
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+  jpa:
+    show-sql: true
+
+  logging:
+    level:
+      org.springframework.web: DEBUG
+
+  docker:
+    compose:
+      enabled: false
+

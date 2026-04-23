@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><title>Image to Text</title></head>
+<body>
+  <h2>Image Description</h2>
+  <img src="/images/Karma.jpg" width="500"/>
+  <p id="result">Loading...</p>
+
+  <script>
+    fetch('/image-to-text')
+      .then(res => res.text())
+      .then(text => document.getElementById('result').innerText = text);
+  </script>
+</body>
+</html>
