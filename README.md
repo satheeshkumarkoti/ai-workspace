@@ -57,4 +57,4 @@ ai-workspace/
 | Finnie AI | Multi-agent finance assistant | [Open](./finnie-ai) |
 | RAG FastAPI | RAG backend | [Open](./rag-fastapi) |
 | Resume ATS | Resume scoring | [Open](./resume-ats-score) |  
-| spring-rag-engine | Spring rag integration | [Open](./spring-rag-engine) |  
+| spring-rag-engine | Spring Boot Inegration with GEN AI | [Open](./spring-rag-engine) |  
